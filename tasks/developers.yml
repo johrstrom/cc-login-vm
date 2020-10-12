@@ -1,0 +1,21 @@
+- name: make www/dev directories
+  file:
+    path: "/var/www/ood/apps/dev/{{ item }}"
+    state: directory
+    mode: '0755'
+  loop: "{{ developers }}"
+
+- name: make users' dev directories
+  file:
+    path: /home/{{ item }}/ondemand/dev
+    state: directory
+    owner: "{{ item }}"
+    group: "{{ item }}"
+  loop: "{{ developers }}"
+
+- name: symlink dev directories
+  file:
+    dest: "/var/www/ood/apps/dev/{{ item }}/gateway"
+    src: "/home/{{ item }}/ondemand/dev"
+    state: link
+  loop: "{{ developers }}"

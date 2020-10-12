@@ -1,0 +1,8 @@
+- name: copy items up to VM
+  copy:
+    src: "{{ item.local }}"
+    dest: "{{ item.remote }}"
+    mode: preserve
+    owner: "{{ item.owner }}"
+    group: "{{ item.group }}"
+  loop: "{{ files_to_move }}"

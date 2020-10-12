@@ -1,0 +1,14 @@
+- include: developers.yml
+  become: true
+  tags:
+  - developers
+
+- include: upgrade.yml
+  become: true
+  tags:
+  - upgrade
+
+- include: configure.yml
+  become: true
+  tags:
+  - configure

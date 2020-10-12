@@ -1,0 +1,6 @@
+developers: []
+files_to_move: []
+erb_motd_initializer: false
+motd:
+  content: "# Welcome to Cloudy Cluster Open OnDemand"
+  dest: "/etc/ood/config/MOTD.md"

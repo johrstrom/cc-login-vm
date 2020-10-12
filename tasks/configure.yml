@@ -1,0 +1,78 @@
+- name: stop listening on port 80
+  replace:
+    regexp: '^Listen 80$'
+    replace: '# Listen 80'
+    path: /opt/rh/httpd24/root/etc/httpd/conf/httpd.conf
+
+- name: stop listening on port 443
+  replace:
+    regexp: '^Listen 443 https$'
+    replace: '# Listen 443 https'
+    path: /opt/rh/httpd24/root/etc/httpd/conf.d/ssl.conf
+
+- name: make some prereq directories
+  file:
+    dest: "{{ item }}"
+    state: directory
+  loop:
+  - "/etc/ood/"
+  - "/etc/ood/config/"
+  - "/etc/ood/config/apps"
+  - "/etc/ood/config/apps/dashboard"
+  - "/etc/ood/config/apps/dashboard/initializers"
+  - "/etc/ood/config/apps/bc_desktop"
+
+- name: setup the orangefs initializer
+  copy:
+    dest: /etc/ood/config/apps/dashboard/initializers/cc.rb
+    content: |
+      require 'pathname'
+
+      OodFilesApp.candidate_favorite_paths.tap do |paths|
+        # add orangefs directory
+        dir = "/mnt/orangefs/#{User.new.name}"
+        Dir.mkdir(dir) unless File.exists?(dir)
+
+        paths << Pathname.new(dir)
+      end
+     
+
+- name: setup motd erb initializer
+  copy:
+    dest: /etc/ood/config/apps/dashboard/initializers/erb_motd.rb
+    content: |
+      class MotdFormatterMarkdown
+        
+        attr_reader :content, :title
+
+        # @param [MotdFile] motd_file an MotdFile object that contains a URI path to a message of the day in OSC format
+        def initialize(motd_file)
+          motd_file = MotdFile.new unless motd_file
+          @title = motd_file.title
+          @content = OodAppkit.markdown.render(file_content(motd_file))
+        end
+
+        def to_partial_path
+          "dashboard/motd_markdown"
+        end
+
+        def file_content(motd)
+          if File.extname(motd.motd_path).eql?(".erb")
+            begin
+              ERB.new(motd.content).result
+            rescue
+              motd.content
+            end
+          else
+            motd.content
+          end
+        end
+      end
+  when: erb_motd_initializer
+
+
+
+- name: write the message of the day
+  copy:
+    dest: "{{ motd.dest }}"
+    content: "{{ motd.content }}"
